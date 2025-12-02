@@ -4,8 +4,11 @@ author: "Soleil, Sam, Joe"
 date: "2025-12-05"
 output: html_document
 ---
+This file provides examples for users to understand our code and how to implement it. 
 
 
+
+##3.1: Foward Path Selection
 ```{r}
 # Example data
 data(mtcars)
@@ -35,5 +38,50 @@ result$aic_by_model
 
 # Meta info
 result$meta
+```
+
+##5.1: Forward Tree Algorithm
+
+#Linear Regression of Forward Tree Algorithm (Gaussian)
+```{r}
+# Data
+data(mtcars)
+X <- mtcars[, setdiff(names(mtcars), "mpg")]
+y <- mtcars$mpg
+
+# Run forward tree algorithm
+result_gaussian <- algorithm_forward_tree(
+  X = X,
+  y = y,
+  family = "gaussian",
+  K = 3,   # max steps
+  eps = 0.1,
+  delta = 2,
+  L = 5
+)
+
+# Inspect models by step
+result_gaussian$models_by_step
+
+```
+
+
+#Logistic Regression of Forward Tree Algorithm (Gaussian)
+```{r}
+y_bin <- ifelse(mtcars$mpg > 20, 1, 0)
+X <- mtcars[, setdiff(names(mtcars), "mpg")]
+
+result_binomial <- algorithm_forward_tree(
+  X = X,
+  y = y_bin,
+  family = "binomial",
+  K = 3,
+  eps = 0.1,
+  delta = 2,
+  L = 5
+)
+
+result_binomial$models_by_step
+
 ```
 
