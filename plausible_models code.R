@@ -1,7 +1,5 @@
-AICmin <- 2
-delta <- 3
-Tau <- 4
+AICmin <- 10e-6
 
-plausible_models <- function(path_forest, path_stability) {
+plausible_models <- function(path_forest, path_stability, delta=2, tau=0.6) {
   
 }
