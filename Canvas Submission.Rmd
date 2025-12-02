@@ -1,0 +1,45 @@
+---
+title: "Canvas Submission"
+author: "Soleil, Sam, Joe"
+date: "2025-12-05"
+output: html_document
+---
+
+
+This file contains examples using the functions in our R package to show users how to use our package. 
+
+
+##Forward Path Selection
+
+```{r}
+# Example data
+data(mtcars)
+
+# Define response + predictors
+response <- "mpg"
+predictors <- setdiff(colnames(mtcars), response)
+
+# Run forward path selection
+result <- forward_path_selection(
+  data = mtcars,
+  response = response,
+  predictors = predictors,
+  delta = 2,
+  eps = 0.1,
+  L = 10,
+  verbose = TRUE
+)
+
+# --- Inspecting results ---
+
+# List of frontiers by step
+result$path_forest
+
+# AIC by model key
+result$aic_by_model
+
+# Meta info
+result$meta
+
+```
+
