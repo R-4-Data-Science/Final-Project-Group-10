@@ -97,7 +97,7 @@ forward_path_selection <- function(
     path_forest[[step + 1]] <- frontier
     step <- step + 1
   }
-  
+   
   # ---- output --------------------------------------------------------------
   
   list(
