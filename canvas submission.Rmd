@@ -8,39 +8,59 @@ This file provides examples for users to understand our code and how to implemen
 
 
 
-##3.1: Foward Path Selection
+##5.1: Foward Path Selection
 ```{r}
-# Example data
-data(mtcars)
+#DATA
+set.seed(1)
+n <- 120; p <- 8
+X <- matrix(rnorm(n*p), n, p)
+beta <- c(2, -1.5, 0, 0, 1, rep(0, p-5))
+y <- X %*% beta + rnorm(n, sd = 1)
+colnames(X) <- paste0("x", 1:p)
+df <- as.data.frame(cbind(y, X))
 
-# Define response + predictors
-response <- "mpg"
-predictors <- setdiff(colnames(mtcars), response)
+#SINGLE VARIABLE AICs#############-----------
+# Empty model
+aic_empty <- AIC(lm(y ~ 1, data = df))
 
-# Run forward path selection
+# Candidate single-variable models
+cand <- lapply(1:p, function(j) lm(as.formula(paste0("y ~ ", colnames(X)[j])), data = df))
+aics <- sapply(cand, AIC)
+
+# Top 5 lowest-AIC single-variable models
+data.frame(variable = colnames(X), AIC = aics)[order(aics), ][1:5, ]
+
+#Runnning Model ######-------
+
+# Assume forward_path_selection() is already defined
 result <- forward_path_selection(
-  data = mtcars,
-  response = response,
-  predictors = predictors,
-  delta = 2,
-  eps = 0.1,
-  L = 10,
+  data = df,
+  response = "y",
+  predictors = colnames(X),
+  delta = 2,   # keep children within 2 AIC of best
+  eps = 0.1,   # must improve AIC at least 0.1
+  L = 5,       # max models per step
   verbose = TRUE
 )
 
-# --- Inspecting results ---
 
-# List of frontiers by step
-result$path_forest
 
-# AIC by model key
-result$aic_by_model
 
-# Meta info
-result$meta
 ```
 
-##5.1: Forward Tree Algorithm
+Results 
+```{r}
+# Models at each step (frontiers)
+result$path_forest
+
+# AICs for all models visited
+result$aic_by_model
+
+```
+
+
+
+##5.1: Forward Tree Algorithm not finished yet
 
 #Linear Regression of Forward Tree Algorithm (Gaussian)
 ```{r}
