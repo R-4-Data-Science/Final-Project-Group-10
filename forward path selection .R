@@ -1,7 +1,7 @@
 #3.1
 
  
-forward_path_selection <- function(
+build_paths <- function(
     data,
     response,
     predictors,
