@@ -65,23 +65,3 @@ stability <- function(
   pi_sum / B
 }
 
-## quick test w mtcars
-
-data(mtcars)
-response   <- "mpg"
-predictors <- setdiff(colnames(mtcars), response)
-
-set.seed(123)
-pi_mtcars <- stability(
-  data       = mtcars,
-  response   = response,
-  predictors = predictors,
-  B          = 20,
-  resample   = "bootstrap",
-  delta      = 2,
-  eps        = 0.5,
-  L          = 20,
-  verbose    = FALSE
-)
-
-pi_mtcars
