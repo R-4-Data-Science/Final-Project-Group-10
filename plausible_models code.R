@@ -1,6 +1,5 @@
 # 3.3
-# https://chatgpt.com/share/6931ad54-5900-8011-a70d-63be4254d81c
-
+# https://chatgpt.com/c/69319fac-a14c-8328-b66a-87e7044d8fff
 
 plausible_models <- function(path_forest, path_stability, delta=2, tau=0.6) {
   
