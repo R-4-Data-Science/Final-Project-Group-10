@@ -6,7 +6,7 @@ stability <- function(
     predictors,
     B        = 50,
     resample = c("bootstrap", "subsample"),
-    m        = NULL,                  # subsample size if using "subsample"
+    m        = NULL,                  
     delta    = 2,
     eps      = 0.5,
     L        = 20,
