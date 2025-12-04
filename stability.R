@@ -1,5 +1,4 @@
 ## 3.2  Stability estimation with resampling
-
 stability <- function(
     data,
     response,
