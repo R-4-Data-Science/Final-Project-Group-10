@@ -5,7 +5,20 @@ date: "2025-12-05"
 output: html_document
 ---
 This file provides examples for users to understand our code and how to implement it. 
+##3.1: Multi-path forward selection
+```{r}
 
+```
+
+##3.2: Resampling with model-set proportions
+```{r}
+
+```
+
+##3.3: AIC Filter + average stability
+```{r}
+
+```
 
 
 ##5.1: Foward Path Selection
