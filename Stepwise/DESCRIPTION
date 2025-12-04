@@ -9,9 +9,7 @@ Authors@R: c(
     person("Samuel", "Herrin", role = "aut"),
     person("Joe", "Vollenweider", role = "aut")
 )
-Description: Implements a stepwise model selection procedure based on AIC that 
-  explores multiple promising model paths simultaneously. The package supports linear and logistic regression, 
-  evaluates variable stability via resampling, and identifies reliable models composed of consistently selected predictors.
+Description: Implements a stepwise model selection procedure based on AIC that explores multiple promising model paths simultaneously. The package supports linear and logistic regression, evaluates variable stability via resampling, and identifies reliable models composed of consistently selected predictors.
 License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true
