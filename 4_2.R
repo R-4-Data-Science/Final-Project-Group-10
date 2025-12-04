@@ -1,20 +1,26 @@
-## 3.2  Stability estimation with resampling
-stability <- function(
-    data,
-    response,
-    predictors,
+## 4.2  Stability Algorithm
+
+stability_glm <- function(
+    X,
+    y,
+    family   = c("gaussian", "binomial"),
     B        = 50,
     resample = c("bootstrap", "subsample"),
-    m        = NULL,                  
+    m        = NULL,      
     delta    = 2,
     eps      = 0.5,
     L        = 20,
-    K        = length(predictors),
+    K        = 5,         
     verbose  = TRUE
 ) {
+  family   <- match.arg(family)
   resample <- match.arg(resample)
-  n        <- nrow(data)
-  p        <- length(predictors)
+  
+  X <- as.data.frame(X)
+  n <- nrow(X)
+  
+  predictors <- colnames(X)
+  p          <- length(predictors)
   
   # accumulator for sum_b z_j^(b)
   pi_sum <- setNames(numeric(p), predictors)
@@ -29,25 +35,27 @@ stability <- function(
       sample.int(n, m, replace = FALSE)
     }
     
-    data_b <- data[idx, , drop = FALSE]
+    X_b <- X[idx, , drop = FALSE]
+    y_b <- y[idx]
     
-    ## 2. run multi-path search 
-    paths_b <- build_paths(
-      data       = data_b,
-      response   = response,
-      predictors = predictors,
-      delta      = delta,
-      eps        = eps,
-      L          = L,
-      K          = K,
-      verbose    = FALSE
-    )$path_forest
+    tree_b <- algorithm_forward_tree(
+      X       = X_b,
+      y       = y_b,
+      family  = family,
+      K       = K,
+      eps     = eps,
+      delta   = delta,
+      L       = L,
+      verbose = FALSE
+    )
     
-    ## 3. collect all models across steps, drop empty model
-    models_b <- unlist(lapply(paths_b, function(df) df$model), recursive = FALSE)
+    models_by_step <- tree_b$models_by_step  # list of lists of character vectors
+    
+    ##collect all models across steps, drop empty model
+    models_b <- unlist(models_by_step, recursive = FALSE)
     models_b <- Filter(function(m) length(m) > 0, models_b)
     
-    ## 4. z_j^(b) = proportion of models containing predictor j
+    ##z_j^(b) = proportion of models containing predictor j
     z_b <- numeric(p)
     if (length(models_b) > 0) {
       for (j in seq_along(predictors)) {
@@ -61,7 +69,6 @@ stability <- function(
     if (verbose) message("Resample ", b, " of ", B)
   }
   
-  ## 5. stability vector π_j = (1/B) * sum_b z_j^(b)
+  ##stability vector π_j = (1/B) * sum_b z_j^(b)
   pi_sum / B
 }
-
