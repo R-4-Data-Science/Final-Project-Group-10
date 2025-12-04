@@ -2,14 +2,9 @@ Package: Stepwise
 Type: Package
 Title: Stepwise Model Selection Using AIC
 Version: 0.1.0
-Authors@R: c(
-    person("Soleil", "Sklencar",
-           email = "sas0257@auburn.edu",
-           role = c("aut", "cre")),
-    person("Samuel", "Herrin", role = "aut"),
-    person("Joe", "Vollenweider", role = "aut")
-)
+Authors@R: c(person(given="Soleil", family="Sklencar", email="sas0257@auburn.edu", role=c("aut","cre")), person(given="Samuel", family="Herrin", role="aut"), person(given="Joe", family="Vollenweider", role="aut"))
 Description: Implements a stepwise model selection procedure based on AIC that explores multiple promising model paths simultaneously. The package supports linear and logistic regression, evaluates variable stability via resampling, and identifies reliable models composed of consistently selected predictors.
-License: MIT + file LICENSE
+License: MIT
 Encoding: UTF-8
 LazyData: true
+RoxygenNote: 7.3.3

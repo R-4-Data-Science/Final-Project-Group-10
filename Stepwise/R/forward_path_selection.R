@@ -42,6 +42,8 @@
 #'
 #' # Access metadata
 #' res$meta
+#' @export
+#' @importFrom stats lm AIC as.formula
 build_paths <- function(
     data,
     response,
@@ -58,7 +60,7 @@ build_paths <- function(
   model_key <- function(vars) paste(sort(vars), collapse = "+")
   model_aic <- function(vars) {
     f <- as.formula(paste(response, "~", ifelse(length(vars)==0, "1", paste(vars, collapse="+"))))
-    AIC(lm(f, data = data)) #for logical change lm() → glm(..., family = binomial) and ensure response is a factor 
+    AIC(lm(f, data = data)) #for logical change lm() → glm(..., family = binomial) and ensure response is a factor
   }
 
   aic_by_model <- list()
