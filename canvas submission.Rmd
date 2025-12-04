@@ -32,8 +32,8 @@ data.frame(variable = colnames(X), AIC = aics)[order(aics), ][1:5, ]
 
 #Runnning Model ######-------
 
-# Assume forward_path_selection() is already defined
-result <- forward_path_selection(
+# Assume build_paths() is already defined
+result <- build_paths(
   data = df,
   response = "y",
   predictors = colnames(X),
