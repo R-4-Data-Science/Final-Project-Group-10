@@ -11,6 +11,8 @@ build_paths <- function(
     verbose = TRUE
 ) {
   
+  stopifnot(response %in% colnames(data))
+  
   model_key <- function(vars) paste(sort(vars), collapse = "+")
   model_aic <- function(vars) {
     f <- as.formula(paste(response, "~", ifelse(length(vars)==0, "1", paste(vars, collapse="+"))))
@@ -22,15 +24,17 @@ build_paths <- function(
   
   # Step 0: empty model
   empty <- character(0)
-  aic_by_model[[model_key(empty)]] <- model_aic(empty)
+  null_aic <- model_aic(empty)
+  aic_by_model[[model_key(empty)]] <- null_aic
   path_forest[[1]] <- data.frame(
     model = I(list(empty)),
-    AIC = aic_by_model[[model_key(empty)]]
+    AIC = null_aic
   )
   
   step <- 1
   repeat {
-    if (step > K) break  # Stop if step limit reached
+    if (step > K) break  # stop if step limit reached
+    
     parents <- lapply(path_forest[[step]]$model, unlist)
     if (verbose) message("Step ", step, ": ", length(parents), " parent models")
     
@@ -74,7 +78,6 @@ build_paths <- function(
     # Deduplicate
     unique_idx <- !duplicated(child_keys)
     frontier <- children_all[unique_idx]
-    frontier_keys <- child_keys[unique_idx]
     
     # Prune if > L
     if (length(frontier) > L) {
