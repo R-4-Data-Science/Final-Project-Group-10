@@ -1,75 +1,110 @@
 #3.1
 
-build_paths <- function(y, X) {
-  p <- ncol(X)
-  colnames(X) <- paste0("x", 1:p)
+build_paths <- function(
+    data,
+    response,
+    predictors,
+    delta = 2,
+    eps = 0.5,
+    L = 20,
+    K = length(predictors),
+    verbose = TRUE
+) {
   
-  # Put everything in a data frame for lm()
-  data <- data.frame(y = y, X)
+  model_key <- function(vars) paste(sort(vars), collapse = "+")
+  model_aic <- function(vars) {
+    f <- as.formula(paste(response, "~", ifelse(length(vars)==0, "1", paste(vars, collapse="+"))))
+    AIC(lm(f, data = data))
+  }
   
-  null_model <- lm(y ~ 1, data = data)
-  null_aic <- AIC(null_model)
+  aic_by_model <- list()
+  path_forest <- list()
   
-  parents <- list(c())  # start with empty model
+  # Step 0: empty model
+  empty <- character(0)
+  aic_by_model[[model_key(empty)]] <- model_aic(empty)
+  path_forest[[1]] <- data.frame(
+    model = I(list(empty)),
+    AIC = aic_by_model[[model_key(empty)]]
+  )
+  
   step <- 1
-  
   repeat {
-    cat("Step", step, ":", length(parents), "parents.\n")
-    children <- list()
-    child_aic <- c()
+    if (step > K) break  # Stop if step limit reached
+    parents <- lapply(path_forest[[step]]$model, unlist)
+    if (verbose) message("Step ", step, ": ", length(parents), " parent models")
     
-    # Loop over parents
+    children_all <- list()
+    child_keys <- character()
+    
     for (parent in parents) {
+      parent_k <- model_key(parent)
+      parent_aic <- aic_by_model[[parent_k]]
       
-      parent_formula <- as.formula(
-        paste("y ~", ifelse(length(parent)==0, "1", paste(parent, collapse="+")))
-      )
-      parent_model <- lm(parent_formula, data = data)
-      parent_aic <- AIC(parent_model)
+      remaining <- setdiff(predictors, parent)
+      if (length(remaining) == 0) next
       
-      unused <- setdiff(colnames(X), parent)
+      child_info <- lapply(remaining, function(v) {
+        vars <- c(parent, v)
+        key <- model_key(vars)
+        if (is.null(aic_by_model[[key]])) {
+          aic_by_model[[key]] <<- model_aic(vars)
+        }
+        list(vars = vars, key = key, AIC = aic_by_model[[key]])
+      })
       
-      # Try adding each unused variable
-      for (u in unused) {
-        new_terms <- c(parent, u)
-        fmla <- as.formula(paste("y ~", paste(new_terms, collapse="+")))
-        mod <- lm(fmla, data = data)
-        a <- AIC(mod)
-        improvement <- parent_aic - a
-        
-        cat("DEBUG:", deparse(fmla), 
-            " AIC=", round(a,4),
-            " improvement=", round(improvement,4), "\n")
-        
-        children[[length(children)+1]] <- new_terms
-        child_aic <- c(child_aic, a)
+      child_AICs <- sapply(child_info, `[[`, "AIC")
+      best_child <- min(child_AICs)
+      
+      # Keep children within delta of best and improvement >= eps
+      keep_idx <- which((child_AICs - best_child <= delta) &
+                          (parent_aic - child_AICs >= eps))
+      if (length(keep_idx) > 0) {
+        kept <- child_info[keep_idx]
+        children_all <- c(children_all, lapply(kept, `[[`, "vars"))
+        child_keys <- c(child_keys, sapply(kept, `[[`, "key"))
       }
     }
     
-    # Evaluate whether children improve over parents
-    parent_aics <- sapply(parents, function(pr) {
-      f <- as.formula(
-        paste("y ~", ifelse(length(pr)==0,"1",paste(pr,collapse="+")))
-      )
-      AIC(lm(f, data = data))
-    })
-    
-    best_parent_aic <- min(parent_aics)
-    
-    improving <- which(child_aic < best_parent_aic)
-    
-    if (length(improving) == 0) {
-      cat("No AIC-improving children. Stopping.\n")
+    if (length(child_keys) == 0) {
+      if (verbose) message("No AIC-improving children. Stopping.")
       break
     }
     
-    parents <- children[improving]
+    # Deduplicate
+    unique_idx <- !duplicated(child_keys)
+    frontier <- children_all[unique_idx]
+    frontier_keys <- child_keys[unique_idx]
+    
+    # Prune if > L
+    if (length(frontier) > L) {
+      AICs <- sapply(frontier, function(v) aic_by_model[[model_key(v)]])
+      frontier <- frontier[order(AICs)[1:L]]
+    }
+    
+    # Store frontier as a data frame
+    df_frontier <- data.frame(
+      model = I(frontier),
+      AIC = sapply(frontier, function(v) aic_by_model[[model_key(v)]])
+    )
+    path_forest[[step + 1]] <- df_frontier
+    
     step <- step + 1
   }
   
-  return(parents)
+  list(
+    path_forest = path_forest,
+    aic_by_model = aic_by_model,
+    meta = list(
+      response = response,
+      predictors = predictors,
+      delta = delta,
+      eps = eps,
+      L = L,
+      K = K
+    )
+  )
 }
-
 #4.1
 
 algorithm_forward_tree <- function(
