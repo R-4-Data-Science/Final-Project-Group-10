@@ -112,7 +112,7 @@ build_paths <- function(
     )
   )
 }
-
+ 
 #4.1
 
 algorithm_forward_tree <- function(
