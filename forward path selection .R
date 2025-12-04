@@ -8,9 +8,9 @@ build_paths <- function(
     eps = 0.5,
     L = 20,
     K = length(predictors),
-    verbose = TRUE
+    verbose = TRUE,
+    debug = FALSE
 ) {
-  
   stopifnot(response %in% colnames(data))
   
   model_key <- function(vars) paste(sort(vars), collapse = "+")
@@ -48,6 +48,11 @@ build_paths <- function(
       remaining <- setdiff(predictors, parent)
       if (length(remaining) == 0) next
       
+      if (debug) {
+        cat("Parent model:", ifelse(length(parent)==0, "(empty)", paste(parent, collapse="+")),
+            "AIC =", parent_aic, "\n")
+      }
+      
       child_info <- lapply(remaining, function(v) {
         vars <- c(parent, v)
         key <- model_key(vars)
@@ -60,18 +65,33 @@ build_paths <- function(
       child_AICs <- sapply(child_info, `[[`, "AIC")
       best_child <- min(child_AICs)
       
-      # Keep children within delta of best and improvement >= eps
+      # Keep children within delta and improvement >= eps
       keep_idx <- which((child_AICs - best_child <= delta) &
                           (parent_aic - child_AICs >= eps))
-      if (length(keep_idx) > 0) {
-        kept <- child_info[keep_idx]
-        children_all <- c(children_all, lapply(kept, `[[`, "vars"))
-        child_keys <- c(child_keys, sapply(kept, `[[`, "key"))
+      
+      # FORCE keep the best child if none satisfy eps
+      if (length(keep_idx) == 0) {
+        keep_idx <- which.min(child_AICs)
       }
+      
+      if (debug) {
+        for (i in seq_along(child_info)) {
+          vars <- child_info[[i]]$vars
+          aic <- child_info[[i]]$AIC
+          improvement <- parent_aic - aic
+          keep <- ifelse(i %in% keep_idx, "KEEP", "REJECT")
+          cat("  Child:", paste(vars, collapse="+"), "AIC =", aic,
+              "improvement =", improvement, keep, "\n")
+        }
+      }
+      
+      kept <- child_info[keep_idx]
+      children_all <- c(children_all, lapply(kept, `[[`, "vars"))
+      child_keys <- c(child_keys, sapply(kept, `[[`, "key"))
     }
     
     if (length(child_keys) == 0) {
-      if (verbose) message("No AIC-improving children. Stopping.")
+      if (verbose) message("No children left. Stopping.")
       break
     }
     
@@ -85,7 +105,7 @@ build_paths <- function(
       frontier <- frontier[order(AICs)[1:L]]
     }
     
-    # Store frontier as a data frame
+    # Store frontier
     df_frontier <- data.frame(
       model = I(frontier),
       AIC = sapply(frontier, function(v) aic_by_model[[model_key(v)]])
@@ -108,6 +128,11 @@ build_paths <- function(
     )
   )
 }
+
+
+
+
+
 #4.1
 
 algorithm_forward_tree <- function(
