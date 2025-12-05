@@ -4,9 +4,16 @@ author: "Soleil, Sam, Joe"
 date: "2025-12-05"
 output: html_document
 ---
-This file provides examples for users to understand our code and how to implement it. 
-##3.1: Multi-path forward selection
-# Performs a forward model selection procedure that follows multiple paths simultaneously starting from the intercept only model and iteratively adding predictors. Models that meet the AIC’s improvement requirement are retained. If no model satisfies the requirement, the child model with the highest AIC is kept.
+
+This file provides examples for users to understand our code and how to implement it.
+
+## 3.1 Multi-path forward selection
+
+Performs a forward model selection procedure that follows multiple paths 
+starting from the intercept-only model and iteratively adding predictors. 
+Models that meet the AIC improvement requirement are retained. 
+If no model satisfies the requirement, the child model with the lowest AIC is kept.
+
 ```{r}
 
 build_paths <- function(
@@ -268,7 +275,9 @@ algorithm_forward_tree <- function(
 ```
 
 ##3.2: Resampling with model-set proportions
-# Uses resampling to quantify how stable each predictor is under the multi-path selection algorithm. The function repeatedly resamples by either bootstrap or subsample techniques and the resulting output is vector with values ranging from 0 to 1. These are stability scores: values closer to 1 indicate predictors that are consistently selected among resamples. Whereas, values closer to 0 indicate predictors that are rarely selected.
+
+Uses resampling to quantify how stable each predictor is under the multi-path selection algorithm. The function repeatedly resamples by either bootstrap or subsample techniques and the resulting output is vector with values ranging from 0 to 1. These are stability scores: values closer to 1 indicate predictors that are consistently selected among resamples. Whereas, values closer to 0 indicate predictors that are rarely selected.
+
 ```{r}
 stability <- function(
     data,
@@ -340,7 +349,9 @@ stability <- function(
 ```
 
 ##3.3: AIC Filter + average stability
-#plausible_models() combines how well a model fits the data with how stable its predictors are. It keeps only models whose AIC values are within a chosen tolerance of the smallest AIC, making them plausible candidates. For each of these, it then looks at the variables included in the model, averages their stability scores, and discards any model whose average falls below tau.
+
+plausible_models() combines how well a model fits the data with how stable its predictors are. It keeps only models whose AIC values are within a chosen tolerance of the smallest AIC, making them plausible candidates. For each of these, it then looks at the variables included in the model, averages their stability scores, and discards any model whose average falls below tau.
+
 ```{r}
 #3.3
 plausible_models <- function(path_forest, path_stability, delta=2, tau=0.6) {
@@ -418,9 +429,9 @@ aics1 <- sapply(fits1, AIC)
 head(data.frame(variable = colnames(Xb), AIC = aics1)[order(aics1), ], 5)
 ```
 
-## 5.3 Example usage (replace with your package calls)
+## 5.3 Example usage 
 
-```{r}
+```{r eval = FALSE}
 # install.packages("stepwise")
 devtools::install_github("R-4-Data-Science/Final-Project-Group-10/Stepwise")
 
