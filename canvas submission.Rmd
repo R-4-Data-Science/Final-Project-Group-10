@@ -421,7 +421,7 @@ head(data.frame(variable = colnames(Xb), AIC = aics1)[order(aics1), ], 5)
 
 ```{r}
 # install.packages("stepwise")
-remotes::install_github("R-4-Data-Science/Final-Project-Group-10")
+devtools::install_github("R-4-Data-Science/Final-Project-Group-10/Stepwise")
 
 library(stepwise)
 

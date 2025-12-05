@@ -1,0 +1,155 @@
+---
+
+title: "Stepwise: using build_paths, stability, and plausible_models vignette"
+author: "Soleil Sklencar, Samuel Herrin, Joe Vollenweider"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+%\VignetteIndexEntry{Using build_paths, stability, and plausible_models}
+%\VignetteEngine{knitr::rmarkdown}
+%\VignetteEncoding{UTF-8}
+-------------------------
+
+# Overview
+
+This vignette demonstrates how to use the `build_paths()`, `stability()`, and `plausible_models()` functions (from this package) with the public `efron2004` dataset (available in the `care` package). The workflow below shows how to run the multi-path model search, estimate variable selection stability via resampling, and extract plausibly-stable models.
+
+# Setup
+
+```{r setup, include=TRUE}
+knitr::opts_chunk$set(echo = TRUE, message = TRUE, warning = FALSE)
+# Load packages
+library(care)   #data(efron2004)
+devtools::install_github("R-4-Data-Science/Final-Project-Group-10/Stepwise")
+
+library(stepwise)
+
+# The functions used in this vignette are expected to be exported from the package under development.
+# If you are running the vignette interactively, you might need to source the R files or load the package.
+
+# Load data
+data(efron2004, package = "care")
+str(efron2004)
+head(efron2004)
+
+# Choose response and predictors programmatically so the vignette works even if column names change.
+response <- names(efron2004)[1]
+predictors <- names(efron2004)[-1]
+cat("Using response:", response, "\nNumber of predictors:", length(predictors), "\n")
+```
+
+# 1. Build paths (multi-path search)
+
+Run the multi-path search with the `build_paths()` function. Default tuning shown below can be adjusted by the user.
+
+```{r build-paths-example}
+set.seed(123)
+paths_out <- build_paths(
+  data       = efron2004,
+  response   = response,
+  predictors = predictors,
+  delta      = 2,
+  eps        = 0.5,
+  L          = 20,
+  K          = min(length(predictors), 10),
+  verbose    = TRUE,
+  debug      = FALSE
+)
+
+# paths_out contains the path forest (list of frontiers by step), cached AICs, and meta
+names(paths_out)
+length(paths_out$path_forest)
+
+# Show first few models from the first few steps
+lapply(head(paths_out$path_forest, 5), function(df) {
+  df
+})
+```
+
+# Visualize AIC progression across steps
+
+```{r plot-aic-progression}
+# assemble a data.frame with one row per model with step information
+models_list <- do.call(rbind, lapply(seq_along(paths_out$path_forest), function(step) {
+  df <- paths_out$path_forest[[step]]
+  if (nrow(df) == 0) return(NULL)
+  data.frame(step = step, AIC = df$AIC, model = sapply(df$model, function(m) paste(m, collapse = "+")), stringsAsFactors = FALSE)
+}))
+
+# simple plot using base graphics (keeps vignette dependencies minimal)
+plot(models_list$step, models_list$AIC, pch = 19, xlab = "Step", ylab = "AIC",
+     main = "AIC of frontier models across steps")
+text(models_list$step, models_list$AIC, labels = models_list$model, cex = 0.6, pos = 4)
+```
+
+# 2. Stability selection via resampling
+
+We use the `stability()` wrapper to run `B` resamples, run `build_paths()` on each resample, and compute the selection frequency (π̂_j) for each predictor.
+
+```{r stability-example}
+set.seed(321)
+pi_hat <- stability(
+  data       = efron2004,
+  response   = response,
+  predictors = predictors,
+  B          = 50,
+  resample   = "bootstrap",
+  delta      = 2,
+  eps        = 0.5,
+  L          = 20,
+  K          = min(length(predictors), 10),
+  verbose    = TRUE
+)
+
+# Show top predictors by stability
+pi_df <- data.frame(predictor = names(pi_hat), pi = as.numeric(pi_hat))
+pi_df[order(-pi_df$pi), ]
+
+# barplot
+barplot(sort(pi_hat), las = 2, main = "Stability (π̂_j) of predictors", ylab = "π̂_j")
+```
+
+# 3. Extract plausible models
+
+We now extract plausible models using the cached AICs in `paths_out` and the stability vector `pi_hat`. The `plausible_models()` function returns models within `delta` of the best AIC and whose mean predictor stability exceeds `tau`.
+
+```{r plausible-models-example}
+# Use the same delta used in build_paths
+delta_val <- 2
+tau <- 0.6
+final_models <- plausible_models(paths_out, pi_hat, delta = delta_val, tau = tau)
+
+# final_models is a data.frame of kept models with AIC and stability
+print(final_models)
+```
+
+# 4. Example: fit the top plausible model and inspect coefficients
+
+```{r fit-top-model}
+if (nrow(final_models) > 0) {
+  # pick top by AIC
+  top <- final_models[order(final_models$AIC), ][1, ]
+  vars <- unlist(top$vars)
+  f <- as.formula(paste(response, "~", ifelse(length(vars) == 0, "1", paste(vars, collapse = "+"))))
+  fit_top <- lm(f, data = efron2004)
+  summary(fit_top)
+} else {
+  message("No plausible models found with the chosen tau=" , tau , ". Consider lowering tau or increasing B.")
+}
+```
+
+# 5. Recommendations for tuning and interpretation
+
+* `delta`: controls how far from the minimum AIC a model can be and still be considered. Smaller `delta` → fewer models.
+* `eps`: minimum AIC improvement required to accept a child when expanding a parent model. Larger `eps` enforces more conservative additions.
+* `L`: maximum number of models retained at each frontier step (computational budget / pruning).
+* `B`: number of resamples for stability — increase for more precise π̂ estimates.
+* `tau`: stability threshold used by `plausible_models()` to filter models by mean predictor stability.
+
+Use diagnostic plots (AIC vs step, stability barplots) to guide tuning choices. Remember that these heuristics are complementary to domain knowledge and standard model-checking techniques.
+
+# Session info
+
+```{r session-info}
+sessionInfo()
+```
