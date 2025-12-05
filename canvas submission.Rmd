@@ -340,8 +340,9 @@ stability <- function(
 ```
 
 ##3.3: AIC Filter + average stability
+#plausible_models() combines how well a model fits the data with how stable its predictors are. It keeps only models whose AIC values are within a chosen tolerance of the smallest AIC, making them plausible candidates. For each of these, it then looks at the variables included in the model, averages their stability scores, and discards any model whose average falls below tau.
 ```{r}
-
+#3.3
 plausible_models <- function(path_forest, path_stability, delta=2, tau=0.6) {
   
   AICdf <- data.frame(model=names(path_forest$aic_by_model), AIC=unlist(path_forest$aic_by_model), vars=I(strsplit(names(path_forest$aic_by_model), "\\+")))
@@ -437,6 +438,9 @@ print(plaus)
 ##References 
 
 3.1, vignette, package setup: https://chatgpt.com/g/g-p-692f0a096ca08191881bf3d46f3d541c-final-project-stats/project
+
+3.2
+https://chatgpt.com/share/69333391-c708-8012-b2f8-97e454e422b5
 
 3.3 https://chatgpt.com/c/69319fac-a14c-8328-b66a-87e7044d8fff
 
