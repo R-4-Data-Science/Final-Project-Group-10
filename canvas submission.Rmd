@@ -423,7 +423,7 @@ head(data.frame(variable = colnames(Xb), AIC = aics1)[order(aics1), ], 5)
 # install.packages("stepwise")
 devtools::install_github("R-4-Data-Science/Final-Project-Group-10/Stepwise")
 
-library(stepwise)
+library(Stepwise)
 
 forest <- build_paths(x = X, y = as.numeric(y), family = "gaussian", K = min(ncol(X), 10), eps = 1e-6, delta = 1, L = 50)
 
