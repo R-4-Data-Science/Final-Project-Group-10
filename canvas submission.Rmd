@@ -8,9 +8,8 @@ This file provides examples for users to understand our code and how to implemen
 
 
 
-##5.1: Foward Path Selection
+## 5.1: Linear Regression (Gaussian)
 ```{r}
-#DATA
 set.seed(1)
 n <- 120; p <- 8
 X <- matrix(rnorm(n*p), n, p)
@@ -19,89 +18,49 @@ y <- X %*% beta + rnorm(n, sd = 1)
 colnames(X) <- paste0("x", 1:p)
 df <- as.data.frame(cbind(y, X))
 
-#SINGLE VARIABLE AICs#############-----------
-# Empty model
+# Fit a few single-step candidates to illustrate AIC comparisons:
 aic_empty <- AIC(lm(y ~ 1, data = df))
-
-# Candidate single-variable models
 cand <- lapply(1:p, function(j) lm(as.formula(paste0("y ~ ", colnames(X)[j])), data = df))
 aics <- sapply(cand, AIC)
-
-# Top 5 lowest-AIC single-variable models
 data.frame(variable = colnames(X), AIC = aics)[order(aics), ][1:5, ]
 
-#Runnning Model ######-------
-
-# Assume build_paths() is already defined
-result <- build_paths(
-  data = df,
-  response = "y",
-  predictors = colnames(X),
-  delta = 2,   # keep children within 2 AIC of best
-  eps = 0.1,   # must improve AIC at least 0.1
-  L = 5,       # max models per step
-  verbose = TRUE
-)
-
-
-
-
-```
-
-Results 
-```{r}
-# Models at each step (frontiers)
-result$path_forest
-
-# AICs for all models visited
-result$aic_by_model
-
 ```
 
 
+## 5.2 Logistic Regression (Binomial)
 
-##5.1: Forward Tree Algorithm not finished yet
-
-#Linear Regression of Forward Tree Algorithm (Gaussian)
 ```{r}
-# Data
-data(mtcars)
-X <- mtcars[, setdiff(names(mtcars), "mpg")]
-y <- mtcars$mpg
+set.seed(2)
+n <- 200; p <- 6
+Xb <- matrix(rnorm(n*p), n, p)
+linpred <- 1.2*Xb[,1] - 1*Xb[,2] + 0.8*Xb[,5]
+prob <- 1 / (1 + exp(-linpred))
+ybin <- rbinom(n, 1, prob)
+colnames(Xb) <- paste0("x", 1:p)
+dfb <- as.data.frame(cbind(y = ybin, Xb))
 
-# Run forward tree algorithm
-result_gaussian <- algorithm_forward_tree(
-  X = X,
-  y = y,
-  family = "gaussian",
-  K = 3,   # max steps
-  eps = 0.1,
-  delta = 2,
-  L = 5
-)
-
-# Inspect models by step
-result_gaussian$models_by_step
-
+# Compare intercept-only vs. adding one variable by AIC:
+fit0 <- glm(y ~ 1, family = binomial(), data = dfb)
+aic0 <- AIC(fit0)
+fits1 <- lapply(1:p, function(j) glm(as.formula(paste0("y ~ ", colnames(Xb)[j])),
+                                     family = binomial(), data = dfb))
+aics1 <- sapply(fits1, AIC)
+head(data.frame(variable = colnames(Xb), AIC = aics1)[order(aics1), ], 5)
 ```
 
+## 5.3 Example usage (replace with your package calls)
 
-#Logistic Regression of Forward Tree Algorithm (Gaussian)
 ```{r}
-y_bin <- ifelse(mtcars$mpg > 20, 1, 0)
-X <- mtcars[, setdiff(names(mtcars), "mpg")]
+# install.packages("stepwise")
+remotes::install_github("R-4-Data-Science/Final-Project-Group-10")
 
-result_binomial <- algorithm_forward_tree(
-  X = X,
-  y = y_bin,
-  family = "binomial",
-  K = 3,
-  eps = 0.1,
-  delta = 2,
-  L = 5
-)
+library(stepwise)
 
-result_binomial$models_by_step
+forest <- build_paths(x = X, y = as.numeric(y), family = "gaussian", K = min(ncol(X), 10), eps = 1e-6, delta = 1, L = 50)
 
+stab <- stability(x = X, y = as.numeric(y), B = 50, resample = "bootstrap", family = "gaussian", K = 10, eps = 1e-6, delta = 1, L = 50)
+
+plaus <- plausible_models(forest, pi = stab$pi, Delta = 2, tau = 0.6)
+print(plaus)
 ```
 
