@@ -25,7 +25,7 @@ aics <- sapply(cand, AIC)
 data.frame(variable = colnames(X), AIC = aics)[order(aics), ][1:5, ]
 
 ```
-
+ 
 
 ## 5.2 Logistic Regression (Binomial)
 
