@@ -339,8 +339,6 @@ stability <- function(
 
 ##3.3: AIC Filter + average stability
 ```{r}
-# 3.3
-# https://chatgpt.com/c/69319fac-a14c-8328-b66a-87e7044d8fff
 
 plausible_models <- function(path_forest, path_stability, delta=2, tau=0.6) {
   
@@ -432,4 +430,11 @@ stab <- stability(x = X, y = as.numeric(y), B = 50, resample = "bootstrap", fami
 plaus <- plausible_models(forest, pi = stab$pi, Delta = 2, tau = 0.6)
 print(plaus)
 ```
+
+
+##References 
+
+3.1, vignette, package setup: https://chatgpt.com/g/g-p-692f0a096ca08191881bf3d46f3d541c-final-project-stats/project
+
+3.3 https://chatgpt.com/c/69319fac-a14c-8328-b66a-87e7044d8fff
 
