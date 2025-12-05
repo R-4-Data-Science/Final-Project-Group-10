@@ -93,7 +93,12 @@ plausible_models <- function(path_forest, path_stability, delta=2, tau=0.6) {
     }
   }
   
-  final_models <- kept_models[remove.idx, ]
+  if (length(remove.idx) >= 1) {
+    final_models <- kept_models[remove.idx, ]
+  }
+  else {
+    final_models <- kept_models
+  }
   
   return(final_models)
 }
