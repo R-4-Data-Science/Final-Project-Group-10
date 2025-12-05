@@ -14,10 +14,10 @@
 #'   * `aic_by_model`: named list of AIC values (names are “model keys”), and  
 #'   * `meta$predictors`: character vector of predictor names.
 #'
-#' @param path_stability A numeric vector giving stability scores for each 
-#'   predictor, in the same order as `path_forest$meta$predictors`. Stability 
-#'   values are typically in \[0, 1\], where higher values indicate greater 
-#'   selection stability.
+#' @param path_stability A numeric vector produce by `stability()` or similar
+#'   functions, giving stability scores for each predictor, in the same order as
+#'   `path_forest$meta$predictors`. Stability values are typically in \[0, 1\], 
+#'   where higher values indicate greater selection stability.
 #'
 #' @param delta Numeric. Maximum allowable AIC distance above the best model. 
 #'   Models with `AIC <= min(AIC) + delta` are retained for further filtering. 
@@ -53,9 +53,9 @@
 #'   res <- build_paths(data = mtcars, response = "mpg",
 #'                      predictors = colnames(mtcars)[-1])
 #'
-#'   # Example of predictor stability scores:
-#'   set.seed(1)
-#'   stab <- runif(length(res$meta$predictors))
+#'   # Suppose stability() was run:
+#'   stab <- stability(data = mtcars, response = "mpg",
+#'                      predictors = colnames(mtcars)[-1])
 #'
 #'   plausible_models(res, stab, delta = 2, tau = 0.6)
 #' }
