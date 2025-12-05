@@ -22,15 +22,23 @@ knitr::opts_chunk$set(echo = TRUE, message = TRUE, warning = FALSE)
 library(care)   #data(efron2004)
 devtools::install_github("R-4-Data-Science/Final-Project-Group-10/Stepwise")
 
-library(stepwise)
+library(Stepwise)
 
 # The functions used in this vignette are expected to be exported from the package under development.
 # If you are running the vignette interactively, you might need to source the R files or load the package.
 
 # Load data
 data(efron2004, package = "care")
+
+# Convert data to a dataframe we can use
+columnnames <- c("y", colnames(efron2004$x))
+efron2004 <- data.frame(cbind(efron2004$y, efron2004$x))
+colnames(efron2004) <- columnnames
+
 str(efron2004)
 head(efron2004)
+
+# 
 
 # Choose response and predictors programmatically so the vignette works even if column names change.
 response <- names(efron2004)[1]
