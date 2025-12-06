@@ -274,7 +274,7 @@ algorithm_forward_tree <- function(
 
 ```
 
-##3.2: Resampling with model-set proportions
+## 3.2: Resampling with model-set proportions
 
 Uses resampling to quantify how stable each predictor is under the multi-path selection algorithm. The function repeatedly resamples by either bootstrap or subsample techniques and the resulting output is vector with values ranging from 0 to 1. These are stability scores: values closer to 1 indicate predictors that are consistently selected among resamples. Whereas, values closer to 0 indicate predictors that are rarely selected.
 
@@ -348,7 +348,7 @@ stability <- function(
 
 ```
 
-##3.3: AIC Filter + average stability
+## 3.3: AIC Filter + average stability
 
 plausible_models() combines how well a model fits the data with how stable its predictors are. It keeps only models whose AIC values are within a chosen tolerance of the smallest AIC, making them plausible candidates. For each of these, it then looks at the variables included in the model, averages their stability scores, and discards any model whose average falls below tau.
 
@@ -356,7 +356,12 @@ plausible_models() combines how well a model fits the data with how stable its p
 #3.3
 plausible_models <- function(path_forest, path_stability, delta=2, tau=0.6) {
   
-  AICdf <- data.frame(model=names(path_forest$aic_by_model), AIC=unlist(path_forest$aic_by_model), vars=I(strsplit(names(path_forest$aic_by_model), "\\+")))
+  AICdf <- data.frame(
+    model = names(path_forest$aic_by_model),
+    AIC   = unlist(path_forest$aic_by_model),
+    vars  = I(strsplit(names(path_forest$aic_by_model), "\\+"))
+  )
+  
   kept_models_index <- c()
   AICMin <- min(AICdf$AIC)
   
@@ -366,7 +371,7 @@ plausible_models <- function(path_forest, path_stability, delta=2, tau=0.6) {
     }
   }
   
-  kept_models <- AICdf[kept_models_index,]
+  kept_models <- AICdf[kept_models_index, ]
   
   stability <- NA
   kept_models <- data.frame(kept_models, stability)
@@ -374,17 +379,23 @@ plausible_models <- function(path_forest, path_stability, delta=2, tau=0.6) {
   remove.idx <- c()
   for (m in 1:length(kept_models$model)) {
     pidx <- which(path_forest$meta$predictors %in% kept_models$vars[[m]])
-
+    
     kept_models$stability[m] <- mean(path_stability[pidx])
     if (kept_models$stability[m] < tau) {
       remove.idx <- c(remove.idx, m * -1)
     }
   }
   
-  final_models <- kept_models[remove.idx,]
+  if (length(remove.idx) >= 1) {
+    final_models <- kept_models[remove.idx, ]
+  }
+  else {
+    final_models <- kept_models
+  }
   
   return(final_models)
 }
+
 
 ```
 
@@ -399,11 +410,9 @@ y <- X %*% beta + rnorm(n, sd = 1)
 colnames(X) <- paste0("x", 1:p)
 df <- as.data.frame(cbind(y, X))
 
-# Fit a few single-step candidates to illustrate AIC comparisons:
-aic_empty <- AIC(lm(y ~ 1, data = df))
-cand <- lapply(1:p, function(j) lm(as.formula(paste0("y ~ ", colnames(X)[j])), data = df))
-aics <- sapply(cand, AIC)
-data.frame(variable = colnames(X), AIC = aics)[order(aics), ][1:5, ]
+path_forest <- build_paths(data=df, response = "V1", predictors = colnames(X))
+path_stability <- stability(data=df, response = "V1", predictors = colnames(X))
+plausible_models(path_forest = path_forest, path_stability = path_stability)
 
 ```
  
@@ -420,13 +429,10 @@ ybin <- rbinom(n, 1, prob)
 colnames(Xb) <- paste0("x", 1:p)
 dfb <- as.data.frame(cbind(y = ybin, Xb))
 
-# Compare intercept-only vs. adding one variable by AIC:
-fit0 <- glm(y ~ 1, family = binomial(), data = dfb)
-aic0 <- AIC(fit0)
-fits1 <- lapply(1:p, function(j) glm(as.formula(paste0("y ~ ", colnames(Xb)[j])),
-                                     family = binomial(), data = dfb))
-aics1 <- sapply(fits1, AIC)
-head(data.frame(variable = colnames(Xb), AIC = aics1)[order(aics1), ], 5)
+path_forestb <- build_paths(data=dfb, response = "y", predictors = colnames(Xb))
+path_stabilityb <- stability(data=dfb, response = "y", predictors = colnames(Xb))
+plausible_models(path_forest = path_forestb, path_stability = path_stabilityb)
+
 ```
 
 ## 5.3 Example usage 
@@ -446,7 +452,7 @@ print(plaus)
 ```
 
 
-##References 
+## References 
 
 3.1, vignette, package setup: https://chatgpt.com/g/g-p-692f0a096ca08191881bf3d46f3d541c-final-project-stats/project
 
