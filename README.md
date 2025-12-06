@@ -15,8 +15,8 @@ The typical workflow is:
 
 ```r
 install.packages("remotes")
-remotes::install_github("R-4-Data-Science/Final-Project-Group-10")
-library(FinalProjectGroup10)
+remotes::install_github("R-4-Data-Science/Final-Project-Group-10/Stepwise")
+library(Stepwise)
 ```
 ## Example with linear regression:
 ```r
